@@ -1,0 +1,13 @@
+# окружение
+.env
+
+# бинарники
+.bin
+
+# файлы IDE
+.vscode
+
+# модели и внутренние папки Spleeter
+input/
+output/
+2stems.tar.gz
