@@ -62,7 +62,7 @@ func handlerChoosingFormatAudioForSeparateState(bot *tgbotapi.BotAPI, msg *tgbot
 	requestMsg1.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
 	bot.Send(requestMsg1)
 
-	msgText2 := "Форматы:"
+	msgText2 := "Поддерживаемые форматы:"
 	requestMsg2 := tgbotapi.NewMessage(msg.Chat.ID, msgText2)
 	requestMsg2.ReplyMarkup = inlineButtonsForChooseFormateToSeparateKeyBoard()
 	bot.Send(requestMsg2)
@@ -85,12 +85,6 @@ func handlerWaitingAudioForSeparateState(bot *tgbotapi.BotAPI, msg *tgbotapi.Mes
 	}
 
 	if msg.Audio != nil {
-		msgText := "Идет обработка..."
-		requestMsg := tgbotapi.NewMessage(msg.Chat.ID, msgText)
-		requestMsg.ReplyToMessageID = msg.MessageID
-
-		// отправим сообщение
-		bot.Send(requestMsg)
 
 		err := handlerAudio(bot, msg)
 		if err != nil {
@@ -119,6 +113,14 @@ func handlerWaitingAudioForSeparateState(bot *tgbotapi.BotAPI, msg *tgbotapi.Mes
 //------------------------Хэндлеры состояний------------------------//
 
 func handlerAudio(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) error {
+
+	// первое сообщение при начале обработки
+	msgText := "Идет обработка..."
+	requestMsg := tgbotapi.NewMessage(msg.Chat.ID, msgText)
+	requestMsg.ReplyToMessageID = msg.MessageID
+
+	// отправим сообщение
+	firstMessage, _ := bot.Send(requestMsg)
 
 	//получим URL аудиофайла
 	audioURL, err := bot.GetFileDirectURL(msg.Audio.FileID)
@@ -156,8 +158,15 @@ func handlerAudio(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) error {
 	// Запускаем Spleeter
 	err = runSpleeter(outputDir, inputDir, audioUniqueName, format)
 	if err != nil {
+		// если не удалось запустить контейнер, удалим уже скачанный файл
+		os.Remove(inputDir + `\` + audioUniqueName)
 		return err
 	}
+
+	//второе сообщение, о том, что файл обработан и теперь отправляется
+	editedText := "Файл обработан. Идет отправка..."
+	editedMsg := tgbotapi.NewEditMessageText(msg.Chat.ID, firstMessage.MessageID, editedText)
+	bot.Send(editedMsg)
 
 	err = sendAudioFiles(audioUniqueName, outputDir, bot, msg)
 	if err != nil {

@@ -58,10 +58,6 @@ func sendAudioFiles(inputAudioName, outputDir string, bot *tgbotapi.BotAPI, msg 
 		return errors.New("ошибка работы Spleeter или прочтения файлов")
 	}
 
-	reqMsg := tgbotapi.NewMessage(msg.Chat.ID, "Файл обработан. Идет отправка...")
-	reqMsg.ReplyToMessageID = msg.MessageID
-	bot.Send(reqMsg)
-
 	// отправим файлы пользователю
 	for _, file := range files {
 		filePath := filepath.Join(outputDir+`\`+inputAudioName, file.Name())
