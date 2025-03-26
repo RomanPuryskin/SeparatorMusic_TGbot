@@ -57,14 +57,15 @@ func handlerMainMenuState(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 
 func handlerChoosingFormatAudioForSeparateState(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 
-	msgText := `Выберите формат, в котором хотите получить аудио`
-	requestMsg := tgbotapi.NewMessage(msg.Chat.ID, msgText)
-	requestMsg.ReplyMarkup = inlineButtonsForChooseFormateToSeparateKeyBoard()
-	message, _ := bot.Send(requestMsg)
+	msgText1 := `Выберите формат, в котором хотите получить аудио`
+	requestMsg1 := tgbotapi.NewMessage(msg.Chat.ID, msgText1)
+	requestMsg1.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+	bot.Send(requestMsg1)
 
-	editMsg := tgbotapi.NewEditMessageReplyMarkup()
-
-	bot.Send(editMsg)
+	msgText2 := "Форматы:"
+	requestMsg2 := tgbotapi.NewMessage(msg.Chat.ID, msgText2)
+	requestMsg2.ReplyMarkup = inlineButtonsForChooseFormateToSeparateKeyBoard()
+	bot.Send(requestMsg2)
 }
 
 func handlerWaitingAudioForSeparateState(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
@@ -136,8 +137,24 @@ func handlerAudio(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) error {
 		return err
 	}
 
+	// получим явно формат аудио, который желает пользователь
+	format := ""
+	switch getCurrentFormat(msg.Chat.ID) {
+	case mp3Separate:
+		format = "mp3"
+	case flacSeparate:
+		format = "flac"
+	case aacSeparate:
+		format = "aac"
+	case oggSeparate:
+		format = "ogg"
+	case m4aSeparate:
+		format = "m4a"
+	default:
+		format = "wav"
+	}
 	// Запускаем Spleeter
-	err = runSpleeter(outputDir, inputDir, audioUniqueName)
+	err = runSpleeter(outputDir, inputDir, audioUniqueName, format)
 	if err != nil {
 		return err
 	}

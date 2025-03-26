@@ -41,8 +41,8 @@ func downloadAudio(audioURL string, audioInputPath string) error {
 	return nil
 }
 
-func runSpleeter(output, input, filename string) error {
-	cmd := exec.Command("docker", "run", "--rm", "-v", input+":/app/input", "-v", output+":/app/output", "spleeter-image:latest", "separate", "-i", "/app/input/"+filename, "-o", "/app/output")
+func runSpleeter(output, input, filename, formatAudio string) error {
+	cmd := exec.Command("docker", "run", "--rm", "-v", input+":/app/input", "-v", output+":/app/output", "spleeter-image:latest", "separate", "-i", "/app/input/"+filename, "-c", formatAudio, "-o", "/app/output")
 	err := cmd.Run()
 	if err != nil {
 		return errors.New("ошибка запуска контейнера Spleeter")

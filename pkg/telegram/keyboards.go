@@ -15,6 +15,7 @@ func commandStartKeyBoard() tgbotapi.ReplyKeyboardMarkup {
 	return replyMarkup
 }
 
+/*
 func replyButtonReturnKeyBoard() tgbotapi.ReplyKeyboardMarkup {
 	replyMarkup := tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
@@ -23,7 +24,7 @@ func replyButtonReturnKeyBoard() tgbotapi.ReplyKeyboardMarkup {
 	)
 
 	return replyMarkup
-}
+}*/
 
 func replyButtonReturnAndMainMenuKeyBoard() tgbotapi.ReplyKeyboardMarkup {
 	replyMarkup := tgbotapi.NewReplyKeyboard(
@@ -39,20 +40,15 @@ func replyButtonReturnAndMainMenuKeyBoard() tgbotapi.ReplyKeyboardMarkup {
 func inlineButtonsForChooseFormateToSeparateKeyBoard() tgbotapi.InlineKeyboardMarkup {
 	replyMarkup := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("wav", "wav_separate"),
-			tgbotapi.NewInlineKeyboardButtonData("mp3", "mp3_separate"),
-			tgbotapi.NewInlineKeyboardButtonData("flac", "flac_separate"),
+			tgbotapi.NewInlineKeyboardButtonData("wav", wavSeparate),
+			tgbotapi.NewInlineKeyboardButtonData("mp3", mp3Separate),
+			tgbotapi.NewInlineKeyboardButtonData("flac", flacSeparate),
 		),
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("wma", "wma_separate"),
-			tgbotapi.NewInlineKeyboardButtonData("ogg", "ogg_separate"),
-			tgbotapi.NewInlineKeyboardButtonData("m4a", "m4a_separate"),
+			tgbotapi.NewInlineKeyboardButtonData("aac", aacSeparate),
+			tgbotapi.NewInlineKeyboardButtonData("ogg", oggSeparate),
+			tgbotapi.NewInlineKeyboardButtonData("m4a", m4aSeparate),
 		),
 	)
 	return replyMarkup
-}
-
-func empty() tgbotapi.ReplyKeyboardMarkup {
-	replyMarup := tgbotapi.NewReplyKeyboard()
-	return replyMarup
 }

@@ -35,7 +35,14 @@ const (
 )
 
 // inline кнопки
-const ()
+const (
+	wavSeparate  = "wav_separate"
+	mp3Separate  = "mp3_separate"
+	flacSeparate = "flac_separate"
+	aacSeparate  = "aac_separate"
+	oggSeparate  = "ogg_separate"
+	m4aSeparate  = "m4a_separate"
+)
 
 func commandsRouter(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 
@@ -66,9 +73,13 @@ func statesRouter(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 }
 
 func inlineButtonsRouter(bot *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery) {
-	switch callback.Data {
-	case "wav_separate":
+
+	if callback.Data == wavSeparate || callback.Data == mp3Separate ||
+		callback.Data == flacSeparate || callback.Data == oggSeparate ||
+		callback.Data == aacSeparate || callback.Data == m4aSeparate {
 		setNewState(callback.Message.Chat.ID, waitingAudioForSeparateState)
-		handlerChoosingFormatAudioForSeparateState(bot, callback.Message)
+		handlerWaitingAudioForSeparateState(bot, callback.Message)
+		setNewCurrentFormat(callback.Message.Chat.ID, callback.Data)
 	}
+
 }

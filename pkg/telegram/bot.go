@@ -1,7 +1,7 @@
 package telegram
 
 import (
-	"fmt"
+	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -40,13 +40,13 @@ func (b *Bot) longPolling() {
 			} else {
 				statesRouter(b.bot, update.Message)
 			}
+			log.Println(update.Message.Chat.ID, getCurrentState(update.Message.Chat.ID))
 		}
 
 		if update.CallbackQuery != nil {
 			inlineButtonsRouter(b.bot, update.CallbackQuery)
 		}
 
-		fmt.Println(getCurrentState(update.Message.Chat.ID))
 	}
 
 }
