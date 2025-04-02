@@ -51,21 +51,31 @@ func runSpleeter(output, input, filename, formatAudio string) error {
 	return nil
 }
 
-func sendAudioFiles(inputAudioName, outputDir string, bot *tgbotapi.BotAPI, msg *tgbotapi.Message) error {
-	// прочитаем файлы которые сделал Spleeter
-	files, err := os.ReadDir(outputDir + `\` + inputAudioName)
+func sendAudioFiles(outputDirPath string, bot *tgbotapi.BotAPI, msg *tgbotapi.Message) error {
+
+	files, err := os.ReadDir(outputDirPath)
 	if err != nil {
-		return errors.New("ошибка работы Spleeter или прочтения файлов")
+		return errors.New("ошибка работы Spleeter/ffmpeg или прочтения файлов")
 	}
 
 	// отправим файлы пользователю
 	for _, file := range files {
-		filePath := filepath.Join(outputDir+`\`+inputAudioName, file.Name())
+		filePath := filepath.Join(outputDirPath, file.Name())
 		audio := tgbotapi.NewAudio(msg.Chat.ID, tgbotapi.FilePath(filePath))
 		_, err = bot.Send(audio)
 		if err != nil {
 			return errors.New("ошибка отправки файла")
 		}
+	}
+
+	return nil
+}
+
+func runFFmpeg(output, input, filenameInput, fileNameOutput string) error {
+	cmd := exec.Command("docker", "run", "--rm", "-v", input+":/app/input", "-v", output+":/app/output", "ffmpeg:latest", "-i", "/app/input/"+filenameInput, "/app/output/"+fileNameOutput)
+	err := cmd.Run()
+	if err != nil {
+		return errors.New("ошибка запуска контейнера ffmpeg")
 	}
 
 	return nil

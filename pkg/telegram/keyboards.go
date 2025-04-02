@@ -52,3 +52,19 @@ func inlineButtonsForChooseFormateToSeparateKeyBoard() tgbotapi.InlineKeyboardMa
 	)
 	return replyMarkup
 }
+
+func inlineButtonsForChooseFormateToChangeKeyBoard() tgbotapi.InlineKeyboardMarkup {
+	replyMarkup := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("wav", wavChangeFormat),
+			tgbotapi.NewInlineKeyboardButtonData("mp3", mp3ChangeFormat),
+			tgbotapi.NewInlineKeyboardButtonData("flac", flacChangeFormat),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("aac", aacChangeFormat),
+			tgbotapi.NewInlineKeyboardButtonData("ogg", oggChangeFormat),
+			tgbotapi.NewInlineKeyboardButtonData("m4a", m4aChangeFormat),
+		),
+	)
+	return replyMarkup
+}

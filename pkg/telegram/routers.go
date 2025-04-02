@@ -36,12 +36,21 @@ const (
 
 // inline кнопки
 const (
+	// для опции separate audio
 	wavSeparate  = "wav_separate"
 	mp3Separate  = "mp3_separate"
 	flacSeparate = "flac_separate"
 	aacSeparate  = "aac_separate"
 	oggSeparate  = "ogg_separate"
 	m4aSeparate  = "m4a_separate"
+
+	// для опции change format
+	wavChangeFormat  = "wav_change_format"
+	mp3ChangeFormat  = "mp3_change_format"
+	flacChangeFormat = "flac_change_format"
+	aacChangeFormat  = "aac_change_format"
+	oggChangeFormat  = "ogg_change_format"
+	m4aChangeFormat  = "m4a_change_format"
 )
 
 func commandsRouter(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
@@ -67,6 +76,10 @@ func statesRouter(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 		handlerChoosingFormatAudioForSeparateState(bot, msg)
 	case waitingAudioForSeparateState:
 		handlerWaitingAudioForSeparateState(bot, msg)
+	case choosingFormatAudioForChangeState:
+		handlerChoosingFormatAudioForChangeState(bot, msg)
+	case waitingAudioForChangeFormatState:
+		handlerWaitingAudioForChangeFormatState(bot, msg)
 	default:
 		handlerMainMenuState(bot, msg)
 	}
@@ -79,7 +92,15 @@ func inlineButtonsRouter(bot *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery)
 		callback.Data == aacSeparate || callback.Data == m4aSeparate {
 		setNewState(callback.Message.Chat.ID, waitingAudioForSeparateState)
 		handlerWaitingAudioForSeparateState(bot, callback.Message)
-		setNewCurrentFormat(callback.Message.Chat.ID, callback.Data)
+		setNewCurrentFormatForSeparate(callback.Message.Chat.ID, callback.Data)
+	}
+
+	if callback.Data == wavChangeFormat || callback.Data == mp3ChangeFormat ||
+		callback.Data == flacChangeFormat || callback.Data == oggChangeFormat ||
+		callback.Data == aacChangeFormat || callback.Data == m4aChangeFormat {
+		setNewState(callback.Message.Chat.ID, waitingAudioForChangeFormatState)
+		handlerWaitingAudioForChangeFormatState(bot, callback.Message)
+		setNewCurrentFormatForChange(callback.Message.Chat.ID, callback.Data)
 	}
 
 }

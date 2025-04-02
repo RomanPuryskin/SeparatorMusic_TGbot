@@ -42,14 +42,11 @@ func handlerCommandStart(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 func handlerMainMenuState(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 	switch msg.Text {
 	case replyButtonChangeFormat:
-		//ToDo сделать хендлер для этого
-	case replyButtonSeparateAudio: // по сути нажали на соответствующую кнопку
-		// установим соответствующее состояние пользователя
-		//setNewState(msg.Chat.ID, waitingAudioForSeparateState)
-		//handlerWaitingAudioForSeparateState(bot, msg)
+		setNewState(msg.Chat.ID, choosingFormatAudioForChangeState)
+		handlerChoosingFormatAudioForChangeState(bot, msg)
+	case replyButtonSeparateAudio:
 		setNewState(msg.Chat.ID, choosingFormatAudioForSeparateState)
 		handlerChoosingFormatAudioForSeparateState(bot, msg)
-		//TODO: если нажата кнопка separate audio перейти в состояние choosingFormatAudioForSeparateState
 	default:
 		handlerCommandStart(bot, msg)
 	}
@@ -70,31 +67,81 @@ func handlerChoosingFormatAudioForSeparateState(bot *tgbotapi.BotAPI, msg *tgbot
 
 func handlerWaitingAudioForSeparateState(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 
-	// если нажата кнопка выхода в главное меню
-	if msg.Text == replyButtonMainMenu {
-		// изменим состояние и вернем клавиатуру главного меню
+	switch {
+
+	case msg.Text == replyButtonMainMenu:
 		handlerCommandStart(bot, msg)
 		return
-	}
 
-	// если нажата кнопка Return идем в состояние выбора формата аудио
-	if msg.Text == replyButtonReturn {
-		// TODO: сделать переход в состояние
+	case msg.Text == replyButtonReturn:
+		setNewState(msg.Chat.ID, choosingFormatAudioForSeparateState)
 		handlerChoosingFormatAudioForSeparateState(bot, msg)
 		return
-	}
 
-	if msg.Audio != nil {
-
-		err := handlerAudio(bot, msg)
+	case msg.Audio != nil:
+		err := handlerSeparateAudio(bot, msg)
 		if err != nil {
+			//TODO: заблокировать действия пользователя пока обрабатывается аудио
 			log.Println(err)
-			// ToDo как то обработать ошибку
+			bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "Произошла ошибка на сервере, попробуйте еще раз позднее"))
 		}
 
-	} else {
+	default:
 		msgText := `Загрузите аудиофайл для обработки.
-		Для выхода в главное меню нажмите Return`
+		Для возврата к выбору формата нажмите Return
+		Для возврата в главное меню нажмите Main menu`
+
+		requestMsg := tgbotapi.NewMessage(msg.Chat.ID, msgText)
+
+		// установим соответствующую клавиатуру
+		requestMsg.ReplyMarkup = replyButtonReturnAndMainMenuKeyBoard()
+
+		// отправим сообщение
+		_, err := bot.Send(requestMsg)
+		if err != nil {
+			log.Println("Ошибка отправки сообщения в handlerWaitingAudioForSeparateState", err)
+		}
+	}
+}
+
+func handlerChoosingFormatAudioForChangeState(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
+	msgText1 := `Выберите формат, в котором хотите получить аудио`
+	requestMsg1 := tgbotapi.NewMessage(msg.Chat.ID, msgText1)
+	requestMsg1.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+	bot.Send(requestMsg1)
+
+	msgText2 := "Поддерживаемые форматы:"
+	requestMsg2 := tgbotapi.NewMessage(msg.Chat.ID, msgText2)
+	requestMsg2.ReplyMarkup = inlineButtonsForChooseFormateToChangeKeyBoard()
+	bot.Send(requestMsg2)
+}
+
+func handlerWaitingAudioForChangeFormatState(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
+
+	switch {
+	case msg.Text == replyButtonMainMenu:
+		handlerCommandStart(bot, msg)
+		return
+
+	case msg.Text == replyButtonReturn:
+		setNewState(msg.Chat.ID, choosingFormatAudioForChangeState)
+		handlerChoosingFormatAudioForChangeState(bot, msg)
+		return
+
+	case msg.Audio != nil:
+		// обработка
+		err := handlerChangeFormatAudio(bot, msg)
+		if err != nil {
+			//TODO: заблокировать действия пользователя пока обрабатывается аудио
+			log.Println(err)
+			bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "Произошла ошибка на сервере, попробуйте еще раз позднее"))
+		}
+
+	// любое другое сообщение
+	default:
+		msgText := `Загрузите аудиофайл для обработки.
+		Для возврата к выбору формата нажмите Return
+		Для возврата в главное меню нажмите Main menu`
 
 		requestMsg := tgbotapi.NewMessage(msg.Chat.ID, msgText)
 
@@ -112,7 +159,7 @@ func handlerWaitingAudioForSeparateState(bot *tgbotapi.BotAPI, msg *tgbotapi.Mes
 
 //------------------------Хэндлеры состояний------------------------//
 
-func handlerAudio(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) error {
+func handlerSeparateAudio(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) error {
 
 	// первое сообщение при начале обработки
 	msgText := "Идет обработка..."
@@ -141,7 +188,7 @@ func handlerAudio(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) error {
 
 	// получим явно формат аудио, который желает пользователь
 	format := ""
-	switch getCurrentFormat(msg.Chat.ID) {
+	switch getCurrentFormatForSeparate(msg.Chat.ID) {
 	case mp3Separate:
 		format = "mp3"
 	case flacSeparate:
@@ -168,7 +215,7 @@ func handlerAudio(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) error {
 	editedMsg := tgbotapi.NewEditMessageText(msg.Chat.ID, firstMessage.MessageID, editedText)
 	bot.Send(editedMsg)
 
-	err = sendAudioFiles(audioUniqueName, outputDir, bot, msg)
+	err = sendAudioFiles(outputDir+`\`+audioUniqueName, bot, msg)
 	if err != nil {
 		// если произойдет ошибка отправки по какой то причине, так же почистим файлы
 		os.Remove(inputDir + `\` + audioUniqueName)
@@ -179,6 +226,80 @@ func handlerAudio(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) error {
 	// почистим после отправки аудиофайлы созданные локально
 	os.Remove(inputDir + `\` + audioUniqueName)
 	os.RemoveAll(outputDir + `\` + audioUniqueName)
+
+	return nil
+}
+
+func handlerChangeFormatAudio(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) error {
+	// первое сообщение при начале обработки
+	msgText := "Идет обработка..."
+	requestMsg := tgbotapi.NewMessage(msg.Chat.ID, msgText)
+	requestMsg.ReplyToMessageID = msg.MessageID
+
+	// отправим сообщение
+	firstMessage, _ := bot.Send(requestMsg)
+
+	//получим URL аудиофайла
+	audioURL, err := bot.GetFileDirectURL(msg.Audio.FileID)
+	if err != nil {
+		return errors.New("ошибка при получении файла с сервера")
+	}
+
+	inputDir := `.\pkg\ffmpeg\input`   // Папка для входных файлов
+	outputDir := `.\pkg\ffmpeg\output` // папка для выходных файлов
+
+	audioUniqueName := generateAudioFileName()
+
+	// скачиваем файл
+	err = downloadAudio(audioURL, inputDir+`\`+audioUniqueName)
+	if err != nil {
+		return err
+	}
+
+	// получим явно формат аудио, который желает пользователь
+	format := ""
+	switch getCurrentFormatForChange(msg.Chat.ID) {
+	case mp3ChangeFormat:
+		format = "mp3"
+	case flacChangeFormat:
+		format = "flac"
+	case aacChangeFormat:
+		format = "aac"
+	case oggChangeFormat:
+		format = "ogg"
+	case m4aChangeFormat:
+		format = "m4a"
+	default:
+		format = "wav"
+	}
+
+	//сгенерируем имя аудиофайла, в который сохраним результат
+	audioOutputName := msg.Audio.FileName + "." + format
+	// Запускаем ffmpeg
+	err = runFFmpeg(outputDir, inputDir, audioUniqueName, audioOutputName)
+	if err != nil {
+		// если не удалось запустить контейнер, удалим уже скачанный файл
+		os.Remove(inputDir + `\` + audioUniqueName)
+		return err
+	}
+
+	//второе сообщение, о том, что файл обработан и теперь отправляется
+	editedText := "Файл обработан. Идет отправка..."
+	editedMsg := tgbotapi.NewEditMessageText(msg.Chat.ID, firstMessage.MessageID, editedText)
+	bot.Send(editedMsg)
+
+	// TODO:
+	err = sendAudioFiles(outputDir, bot, msg)
+	if err != nil {
+		// если произойдет ошибка отправки по какой то причине, так же почистим файлы
+		os.Remove(inputDir + `\` + audioUniqueName)
+		os.Remove(outputDir + `\` + audioOutputName)
+		return err
+	}
+
+	// почистим после отправки аудиофайлы созданные локально
+	os.Remove(inputDir + `\` + audioUniqueName)
+	os.Remove(outputDir + `\` + audioOutputName)
 
 	return nil
 }
